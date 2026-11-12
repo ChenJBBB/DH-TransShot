@@ -329,6 +329,20 @@ export function ServiceSettings({
     );
   };
 
+  const addBailian = () => {
+    onProvidersChange("tts", [
+      ...settings.tts.providers,
+      {
+        name: "阿里云百炼 · 日语",
+        base_url: "https://YOUR_WORKSPACE_ID.cn-beijing.maas.aliyuncs.com/api/v1",
+        api_key: "",
+        model: "qwen-audio-3.1-tts-flash",
+        extra: JSON.stringify({ voice: "longanhuan_v3.1", language_hints: ["ja"], format: "wav", sample_rate: 24000 }, null, 2),
+      },
+    ]);
+    onActiveProviderChange("tts", settings.tts.providers.length);
+  };
+
   return (
     <div>
       <SectionHeader
@@ -372,6 +386,16 @@ export function ServiceSettings({
       />
 
       <div style={{ marginTop: "14px" }} className="flex flex-col gap-5">
+        {activeService === "tts" ? (
+          <div className="flex flex-col gap-2">
+            <Chip onClick={addBailian}>＋ 阿里云百炼（日语）</Chip>
+            <InfoNote>
+              百炼原生支持 qwen-audio-3.1-tts-flash。添加后，将地址中的 YOUR_WORKSPACE_ID
+              替换为百炼工作空间 ID，并在该提供商填写同地域的百炼密钥；新加坡地域需修改地址。
+              默认使用 longanhuan_v3.1 和日语参数，整段合成后播放。
+            </InfoNote>
+          </div>
+        ) : null}
         <ProviderEditor
           config={config}
           onChange={(key, value) => onServiceChange(activeService, key, value)}

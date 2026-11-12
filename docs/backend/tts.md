@@ -2,6 +2,27 @@
 
 ## 概述
 
+### 阿里云百炼 Qwen-Audio-TTS
+
+`tts/bailian.rs` 为原生 HTTP 协议。模型以 `qwen-audio-` 开头，或地址指向
+`/api/v1/services/audio/tts/SpeechSynthesizer` 时进入此路径；其余 TTS 分发保持不变。
+不需要额外 HTTP 代理。根据[阿里云 HTTP API](https://www.alibabacloud.com/help/en/model-studio/qwen-audio-tts-http-api)
+将参数放在 `input` 中，非流式请求完成后下载 `output.audio.url`，下载不携带 API 密钥。
+下载后的完整 WAV/MP3 复用现有本地播放和内存缓存。
+
+设置 → 服务 → TTS →「＋ 阿里云百炼（日语）」添加独立提供商：
+
+- 模型 `qwen-audio-3.1-tts-flash`，音色 `longanhuan_v3.1`。
+- 地址使用同地域工作空间，例如 `https://工作空间ID.cn-beijing.maas.aliyuncs.com/api/v1`。
+  新加坡使用 `ap-southeast-1`。工作空间 ID 和 API Key 由用户填写。
+- 独立参数 `{"voice":"longanhuan_v3.1","language_hints":["ja"],"format":"wav","sample_rate":24000}`。
+  同时兼容原生嵌套 `input` 参数。`text` 始终来自当前朗读文本。
+- 只将百炼参数写入 `input`，不透传 SiliconFlow 的 speed/response_format 或 MiMo 的 stream。
+  原有 SiliconFlow 翻译、OCR 和 TTS 默认配置保持不变。
+
+`bailian::tests` 验证日语请求、端点解析、协议隔离、错误响应以及 POST → 音频 GET 的真实本地 HTTP 流程。
+无需真实 API Key；这些测试不代表付费服务实测。
+
 将文本转为语音。合成结果是 **base64 编码的完整音频**（写进缓存供重播），chat+audio 流式路径则把 PCM 分块边收边送进本地输出设备。
 
 > **播放不在前端**：音频由 [audio/](audio.md) 直接送进操作系统输出设备，一个字节都不过 IPC。原因见那篇文档——主窗口失焦自动隐藏后，WebKit 会让 `AudioContext` 空转渲染，日志一切正常却一声不响。

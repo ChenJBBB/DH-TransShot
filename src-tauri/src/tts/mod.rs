@@ -6,6 +6,8 @@ use reqwest::Client;
 use serde::Deserialize;
 use std::time::{Duration, Instant};
 
+mod bailian;
+
 /// chat+audio 协议默认音色（如小米 MiMo），可通过 `extra.voice` 覆盖。
 /// 注意：这是「裸名字」音色（如 `Milo`），不同于 audio/speech 协议的 `{model}:alex` 形态。
 ///
@@ -135,6 +137,12 @@ pub async fn synthesize(
 ) -> anyhow::Result<SpeechResult> {
     if base_url.trim().is_empty() {
         anyhow::bail!("TTS 未配置 API 地址，请在设置中填写 base_url");
+    }
+
+    if bailian::matches(base_url, model) {
+        return bailian::synthesize(client, base_url, api_key, model, extra, text)
+            .await
+            .map(SpeechResult::whole);
     }
 
     let url = resolve_tts_endpoint_url(base_url);

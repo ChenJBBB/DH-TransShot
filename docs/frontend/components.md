@@ -26,6 +26,13 @@
 
 ## 核心逻辑
 
+### 百炼 TTS 提供商
+
+`ServiceSettings.tsx` 的「＋ 阿里云百炼（日语）」追加并选中独立提供商，预置
+`qwen-audio-3.1-tts-flash`、`longanhuan_v3.1`、`language_hints: ["ja"]` 和 WAV/24kHz。
+用户在提供商编辑器填写工作空间地址与同地域密钥。操作不修改全局凭据或翻译、OCR 配置，
+原有 TTS 提供商仍可随时切换。百炼为整段合成播放，不受 MiMo 流式参数影响。
+
 ### TranslationPanel.tsx
 
 **布局结构（卡片化设计）：**

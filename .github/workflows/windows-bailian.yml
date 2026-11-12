@@ -1,0 +1,79 @@
+name: Windows x64 Bailian installer
+
+on:
+  push:
+    branches: ['build/windows-bailian']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+          components: rustfmt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+      - name: Use installed MSVC linker
+        shell: pwsh
+        run: |
+          # Upstream selects lld-link. windows-latest already has MSVC link.exe.
+          'CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER=link.exe' >> $env:GITHUB_ENV
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Check Rust formatting
+        run: rustfmt --edition 2021 --check src-tauri/src/tts/bailian.rs
+      - name: Build frontend and check TypeScript
+        run: pnpm build
+      - name: Rust unit and HTTP regression tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml --lib --locked
+      - name: Build release NSIS installer
+        run: pnpm tauri build --target x86_64-pc-windows-msvc --bundles nsis
+      - name: Verify installer and installed application
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $installers = @(Get-ChildItem src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*-setup.exe)
+          if ($installers.Count -ne 1) { throw 'Expected exactly one NSIS installer' }
+          $installer = $installers[0]
+          if ($installer.Length -lt 1MB) { throw 'Installer is unexpectedly small' }
+          $destination = Join-Path $env:RUNNER_TEMP 'DH-TransShot-verify'
+          $process = Start-Process $installer.FullName -ArgumentList @('/S', "/D=$destination") -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "NSIS install failed: $($process.ExitCode)" }
+          $app = Get-ChildItem $destination -Recurse -Filter 'dh-transshot.exe' | Select-Object -First 1
+          if (!$app) { throw 'Installed application not found' }
+          $bytes = [IO.File]::ReadAllBytes($app.FullName)
+          $peOffset = [BitConverter]::ToInt32($bytes, 0x3c)
+          if ([BitConverter]::ToUInt32($bytes, $peOffset) -ne 0x4550) { throw 'Invalid PE signature' }
+          if ([BitConverter]::ToUInt16($bytes, $peOffset + 4) -ne 0x8664) { throw 'Application is not x64' }
+          $appProcess = Start-Process $app.FullName -PassThru
+          Start-Sleep -Seconds 12
+          $appProcess.Refresh()
+          if ($appProcess.HasExited) { throw "Application exited during startup: $($appProcess.ExitCode)" }
+          Stop-Process -Id $appProcess.Id -Force
+          $uninstaller = Get-ChildItem $destination -Filter '*uninstall*.exe' | Select-Object -First 1
+          if (!$uninstaller) { throw 'NSIS uninstaller not found' }
+          $uninstall = Start-Process $uninstaller.FullName -ArgumentList '/S' -Wait -PassThru
+          if ($uninstall.ExitCode -ne 0) { throw 'Silent uninstall failed' }
+          New-Item -ItemType Directory -Force output | Out-Null
+          Copy-Item $installer.FullName output/
+          Get-FileHash output/*.exe -Algorithm SHA256 | Format-List
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DH-TransShot-Windows-x64-Bailian
+          path: output/*.exe
+          if-no-files-found: error
+          retention-days: 14
