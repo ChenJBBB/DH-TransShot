@@ -1,0 +1,30 @@
+name: Publish verified Windows installer
+on:
+  push:
+    branches: ['publish/windows-bailian']
+    paths: ['.github/workflows/publish-bailian.yml']
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download, verify and publish existing installer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run download 43159804377 --repo ChenJBBB/DH-TransShot --name DH-TransShot-Windows-x64-Bailian --dir installer
+          echo '06ce75a6371a3de0a20a8135c830fbbf5a0dea447ab484cb3d1ce40776aca86c  installer/DH-TransShot_1.1.10_x64-setup.exe' | sha256sum --check
+          mv installer/DH-TransShot_1.1.10_x64-setup.exe installer/DH-TransShot_1.1.10_x64-Bailian-setup.exe
+          cat > release-notes.md <<'NOTES'
+          Windows x64 release build based on upstream v1.1.10 (fadb6806b6504b1e5ec7ebd9db3fc08825e9d0b7).
+          
+          Adds native Alibaba Cloud Bailian qwen-audio-3.1-tts-flash support and a Japanese provider preset using longanhuan_v3.1 and language_hints=["ja"]. Enter your regional workspace endpoint and Bailian API key in that TTS provider. Existing SiliconFlow translation, OCR and TTS providers remain available. No additional HTTP proxy is required.
+          
+          Validation: TypeScript/production frontend build; Rust unit and local HTTP regression tests; Windows release build; NSIS silent install, installed application x64 PE check, startup smoke test and silent uninstall. Local HTTP tests do not establish live paid API service behavior. This community build has no Authenticode signing certificate.
+          NOTES
+          gh release create bailian-1.1.10-r1 installer/DH-TransShot_1.1.10_x64-Bailian-setup.exe --repo ChenJBBB/DH-TransShot --target 04fc7cbea55f35f4918e8e52cf06e9a3e052bf98 --title 'DH-TransShot 1.1.10 · Bailian · Windows x64' --notes-file release-notes.md
