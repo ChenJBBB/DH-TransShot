@@ -142,6 +142,9 @@ interface Language { code: string; name: string }
 
 ## 修改指南
 
+- `vocabulary.ts` 按 textarea 的 UTF-16 选区提取句子，按 Unicode 字符截取前后上下文，保留日文、中文和 emoji。
+- `invoke.ts` 的 `saveVocabulary`、`getVocabularyDirectory`、`openVocabularyDirectory` 对应生词本的三个后端 RPC。
+
 - 新增 Tauri 命令时同步添加 invoke 封装函数，保持类型安全
 - invoke 参数名必须与后端 `#[tauri::command]` 函数参数名的 camelCase 形式一致
 - **关闭窗口用 `closeWindowDeferred(label)`，不要用 `getCurrentWindow().close()`**：macOS 上直接销毁还活着的 webview 会让 WebKit 的 display link 偶发访问已释放的滚动树，把整个 App 打崩。见 [backend/window_lifecycle.md](../backend/window_lifecycle.md)

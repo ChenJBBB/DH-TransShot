@@ -64,6 +64,12 @@ DH-TransShot 是截屏+翻译二合一桌面工具，采用 Tauri v2 多窗口�
 
 ## 核心工作流
 
+### 收藏选词（应用内 Alt+C）
+
+原文或译文 textarea 选区 → `TranslationPanel` / `lib/vocabulary` 提取词语与句子 →
+`commands/vocabulary` → `vocabulary.rs` 在文档目录追加 UTF-8 TXT，最多 2000 字符后自动续文件。
+设置的“生词本”页面可以查看及打开实际保存目录。此流程不访问网络，不修改全局快捷键。
+
 ### 区域截图（Alt+A / ⌥A）
 
 ```

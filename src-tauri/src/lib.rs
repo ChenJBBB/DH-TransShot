@@ -8,6 +8,7 @@ mod screenshot;
 mod translation;
 mod tray;
 mod tts;
+mod vocabulary;
 #[cfg(target_os = "windows")]
 mod win_input;
 mod window_lifecycle;
@@ -53,6 +54,9 @@ pub fn run() {
             commands::clipboard::save_file,
             commands::tts::speak_text,
             commands::tts::stop_speech,
+            commands::vocabulary::save_vocabulary,
+            commands::vocabulary::get_vocabulary_directory,
+            commands::vocabulary::open_vocabulary_directory,
             window_lifecycle::close_window_deferred,
             hotkey::suspend_hotkeys,
             hotkey::resume_hotkeys,

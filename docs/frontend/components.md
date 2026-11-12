@@ -26,6 +26,16 @@
 
 ## 核心逻辑
 
+### 生词本收藏
+
+`TranslationPanel` 在原文/译文 textarea 内处理 `Alt+C`（非全局快捷键）。读取
+`selectionStart/selectionEnd` 的精确选区，`lib/vocabulary.ts` 提取对应句子，连同另一栏文本节选和本机时间
+提交给 `save_vocabulary`。禁用按键连发与保存中重复提交，不收藏 OCR/翻译中的占位文字。
+界面提供同功能收藏按钮（按下鼠标时保留 textarea 焦点与选区），以及成功、重复、失败提示。
+
+`VocabularySettings.tsx` 位于设置 → 生词本，显示后端解析的真实目录并提供“打开存储文件夹”按钮。
+分文件规则见 [生词本存储](../backend/vocabulary.md)。
+
 ### 百炼 TTS 提供商
 
 `ServiceSettings.tsx` 的「＋ 阿里云百炼（日语）」追加并选中独立提供商，预置

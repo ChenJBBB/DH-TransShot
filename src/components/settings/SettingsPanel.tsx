@@ -14,9 +14,10 @@ import { ServiceSettings, type ServiceName } from "./ServiceSettings";
 import { HotkeySettings } from "./HotkeySettings";
 import { SpeechSettings } from "./SpeechSettings";
 import { TranslationSettings } from "./TranslationSettings";
+import { VocabularySettings } from "./VocabularySettings";
 import type { Settings, ExtraProvider, HotkeyConfig, TranslationPromptConfig } from "../../types";
 
-type SectionKey = "service" | "translation" | "hotkey" | "speech";
+type SectionKey = "service" | "translation" | "hotkey" | "speech" | "vocabulary";
 
 const ICON_PROPS = {
   width: 15,
@@ -30,6 +31,11 @@ const ICON_PROPS = {
 } as const;
 
 const navItems: { key: SectionKey; label: string; icon: ReactNode }[] = [
+  {
+    key: "vocabulary",
+    label: "生词本",
+    icon: <svg {...ICON_PROPS}><path d="M4 4h16v16H4z" /><path d="M8 4v16M11 9h6M11 13h6" /></svg>,
+  },
   {
     key: "service",
     label: "服务",
@@ -289,6 +295,7 @@ export function SettingsPanel() {
           {section === "speech" && (
             <SpeechSettings speech={settings.speech} onChange={updateSpeech} />
           )}
+          {section === "vocabulary" && <VocabularySettings />}
         </div>
       </div>
 

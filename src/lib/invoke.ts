@@ -119,3 +119,23 @@ export async function suspendHotkeys(): Promise<void> {
 export async function resumeHotkeys(): Promise<void> {
   return invoke("resume_hotkeys");
 }
+
+export interface VocabularyEntry {
+  text: string;
+  context: string;
+  counterpart: string;
+  side: "source" | "target";
+  saved_at: string;
+}
+
+export function saveVocabulary(entry: VocabularyEntry): Promise<{ path: string; duplicate: boolean }> {
+  return invoke("save_vocabulary", { entry });
+}
+
+export function getVocabularyDirectory(): Promise<string> {
+  return invoke("get_vocabulary_directory");
+}
+
+export function openVocabularyDirectory(): Promise<void> {
+  return invoke("open_vocabulary_directory");
+}
